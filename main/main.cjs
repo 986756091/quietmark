@@ -10,6 +10,112 @@ let mainWindow;
 let rendererReady = false;
 let pendingFilePaths = [];
 let flushingFileOpens = false;
+let currentLanguage = "en";
+
+const i18n = {
+  en: {
+    error: {
+      unableToOpenFile: "Unable to open file"
+    },
+    dialogs: {
+      untitled: "Untitled.md",
+      document: "Document",
+      markdown: "Markdown",
+      allFiles: "All Files",
+      text: "Text",
+      html: "HTML"
+    },
+    menu: {
+      about: `About ${appName}`,
+      services: "Services",
+      hide: `Hide ${appName}`,
+      hideOthers: "Hide Others",
+      unhide: "Show All",
+      quit: `Quit ${appName}`,
+      file: "File",
+      new: "New",
+      open: "Open...",
+      save: "Save",
+      saveAs: "Save As...",
+      exportHtml: "Export HTML...",
+      close: "Close",
+      edit: "Edit",
+      undo: "Undo",
+      redo: "Redo",
+      cut: "Cut",
+      copy: "Copy",
+      paste: "Paste",
+      selectAll: "Select All",
+      find: "Find",
+      view: "View",
+      toggleOutline: "Toggle Sidebar",
+      toggleSourceMode: "Toggle Source Mode",
+      focusMode: "Focus Mode",
+      reload: "Reload",
+      toggleDevTools: "Toggle Developer Tools",
+      toggleFullScreen: "Toggle Full Screen",
+      window: "Window",
+      minimize: "Minimize",
+      zoom: "Zoom",
+      front: "Bring All to Front"
+    }
+  },
+  zh: {
+    error: {
+      unableToOpenFile: "无法打开文件"
+    },
+    dialogs: {
+      untitled: "未命名.md",
+      document: "文档",
+      markdown: "Markdown",
+      allFiles: "所有文件",
+      text: "文本",
+      html: "HTML"
+    },
+    menu: {
+      about: `关于 ${appName}`,
+      services: "服务",
+      hide: `隐藏 ${appName}`,
+      hideOthers: "隐藏其他",
+      unhide: "全部显示",
+      quit: `退出 ${appName}`,
+      file: "文件",
+      new: "新建",
+      open: "打开...",
+      save: "保存",
+      saveAs: "另存为...",
+      exportHtml: "导出 HTML...",
+      close: "关闭",
+      edit: "编辑",
+      undo: "撤销",
+      redo: "重做",
+      cut: "剪切",
+      copy: "复制",
+      paste: "粘贴",
+      selectAll: "全选",
+      find: "查找",
+      view: "视图",
+      toggleOutline: "显示/隐藏侧边栏",
+      toggleSourceMode: "切换源码模式",
+      focusMode: "专注模式",
+      reload: "重新载入",
+      toggleDevTools: "切换开发者工具",
+      toggleFullScreen: "切换全屏",
+      window: "窗口",
+      minimize: "最小化",
+      zoom: "缩放",
+      front: "全部置于顶层"
+    }
+  }
+};
+
+function normalizeLanguage(language) {
+  return String(language || "").toLowerCase().startsWith("zh") ? "zh" : "en";
+}
+
+function t() {
+  return i18n[currentLanguage] || i18n.en;
+}
 
 const gotLock = app.requestSingleInstanceLock();
 
@@ -70,7 +176,7 @@ async function flushPendingFileOpens() {
       try {
         await openFile(filePath);
       } catch (error) {
-        dialog.showErrorBox("Unable to open file", `${filePath}\n\n${error.message}`);
+        dialog.showErrorBox(t().error.unableToOpenFile, `${filePath}\n\n${error.message}`);
       }
     }
   } finally {
@@ -182,11 +288,12 @@ async function openFile(filePath, { notify = true } = {}) {
 }
 
 async function openDialog() {
+  const labels = t().dialogs;
   const result = await dialog.showOpenDialog(mainWindow, {
     properties: ["openFile"],
     filters: [
-      { name: "Markdown", extensions: ["md", "markdown", "mdown", "txt"] },
-      { name: "All Files", extensions: ["*"] }
+      { name: labels.markdown, extensions: ["md", "markdown", "mdown", "txt"] },
+      { name: labels.allFiles, extensions: ["*"] }
     ]
   });
 
@@ -199,11 +306,12 @@ async function saveFile({ filePath, content }) {
   let targetPath = filePath;
 
   if (!targetPath) {
+    const labels = t().dialogs;
     const result = await dialog.showSaveDialog(mainWindow, {
-      defaultPath: "Untitled.md",
+      defaultPath: labels.untitled,
       filters: [
-        { name: "Markdown", extensions: ["md"] },
-        { name: "Text", extensions: ["txt"] }
+        { name: labels.markdown, extensions: ["md"] },
+        { name: labels.text, extensions: ["txt"] }
       ]
     });
 
@@ -233,9 +341,10 @@ async function saveFile({ filePath, content }) {
 }
 
 async function exportHtml({ html, title }) {
+  const labels = t().dialogs;
   const result = await dialog.showSaveDialog(mainWindow, {
-    defaultPath: `${title || "Document"}.html`,
-    filters: [{ name: "HTML", extensions: ["html"] }]
+    defaultPath: `${title || labels.document}.html`,
+    filters: [{ name: labels.html, extensions: ["html"] }]
   });
 
   if (result.canceled || !result.filePath) {
@@ -247,105 +356,106 @@ async function exportHtml({ html, title }) {
 }
 
 function buildMenu() {
+  const labels = t().menu;
   const template = [
     {
       label: appName,
       submenu: [
-        { role: "about" },
+        { label: labels.about, role: "about" },
         { type: "separator" },
-        { role: "services" },
+        { label: labels.services, role: "services" },
         { type: "separator" },
-        { role: "hide" },
-        { role: "hideOthers" },
-        { role: "unhide" },
+        { label: labels.hide, role: "hide" },
+        { label: labels.hideOthers, role: "hideOthers" },
+        { label: labels.unhide, role: "unhide" },
         { type: "separator" },
-        { role: "quit" }
+        { label: labels.quit, role: "quit" }
       ]
     },
     {
-      label: "File",
+      label: labels.file,
       submenu: [
         {
-          label: "New",
+          label: labels.new,
           accelerator: "CmdOrCtrl+N",
           click: () => send("menu-command", "new")
         },
         {
-          label: "Open...",
+          label: labels.open,
           accelerator: "CmdOrCtrl+O",
           click: openDialog
         },
         { type: "separator" },
         {
-          label: "Save",
+          label: labels.save,
           accelerator: "CmdOrCtrl+S",
           click: () => send("menu-command", "save")
         },
         {
-          label: "Save As...",
+          label: labels.saveAs,
           accelerator: "Shift+CmdOrCtrl+S",
           click: () => send("menu-command", "save-as")
         },
         { type: "separator" },
         {
-          label: "Export HTML...",
+          label: labels.exportHtml,
           accelerator: "Option+CmdOrCtrl+E",
           click: () => send("menu-command", "export-html")
         },
         { type: "separator" },
-        { role: "close" }
+        { label: labels.close, role: "close" }
       ]
     },
     {
-      label: "Edit",
+      label: labels.edit,
       submenu: [
-        { role: "undo" },
-        { role: "redo" },
+        { label: labels.undo, role: "undo" },
+        { label: labels.redo, role: "redo" },
         { type: "separator" },
-        { role: "cut" },
-        { role: "copy" },
-        { role: "paste" },
-        { role: "selectAll" },
+        { label: labels.cut, role: "cut" },
+        { label: labels.copy, role: "copy" },
+        { label: labels.paste, role: "paste" },
+        { label: labels.selectAll, role: "selectAll" },
         { type: "separator" },
         {
-          label: "Find",
+          label: labels.find,
           accelerator: "CmdOrCtrl+F",
           click: () => send("menu-command", "find")
         }
       ]
     },
     {
-      label: "View",
+      label: labels.view,
       submenu: [
         {
-          label: "Toggle Outline",
+          label: labels.toggleOutline,
           accelerator: "CmdOrCtrl+1",
           click: () => send("menu-command", "toggle-outline")
         },
         {
-          label: "Toggle Source Mode",
+          label: labels.toggleSourceMode,
           accelerator: "CmdOrCtrl+/",
           click: () => send("menu-command", "toggle-source")
         },
         {
-          label: "Focus Mode",
+          label: labels.focusMode,
           accelerator: "CmdOrCtrl+.",
           click: () => send("menu-command", "toggle-focus")
         },
         { type: "separator" },
-        { role: "reload" },
-        { role: "toggleDevTools" },
+        { label: labels.reload, role: "reload" },
+        { label: labels.toggleDevTools, role: "toggleDevTools" },
         { type: "separator" },
-        { role: "togglefullscreen" }
+        { label: labels.toggleFullScreen, role: "togglefullscreen" }
       ]
     },
     {
-      label: "Window",
+      label: labels.window,
       submenu: [
-        { role: "minimize" },
-        { role: "zoom" },
+        { label: labels.minimize, role: "minimize" },
+        { label: labels.zoom, role: "zoom" },
         { type: "separator" },
-        { role: "front" }
+        { label: labels.front, role: "front" }
       ]
     }
   ];
@@ -366,6 +476,14 @@ ipcMain.handle("set-edited", (_event, edited) => {
   if (mainWindow) {
     mainWindow.setDocumentEdited(Boolean(edited));
   }
+});
+ipcMain.handle("set-language", (_event, language) => {
+  const nextLanguage = normalizeLanguage(language);
+  if (nextLanguage !== currentLanguage) {
+    currentLanguage = nextLanguage;
+    buildMenu();
+  }
+  return currentLanguage;
 });
 ipcMain.handle("renderer-ready", () => {
   rendererReady = true;

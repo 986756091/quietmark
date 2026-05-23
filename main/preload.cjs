@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld("quietMark", {
   saveFile: (payload) => ipcRenderer.invoke("save-file", payload),
   exportHtml: (payload) => ipcRenderer.invoke("export-html", payload),
   setEdited: (edited) => ipcRenderer.invoke("set-edited", edited),
+  setLanguage: (language) => ipcRenderer.invoke("set-language", language),
   rendererReady: () => ipcRenderer.invoke("renderer-ready"),
   showItem: (filePath) => ipcRenderer.invoke("show-item", filePath),
   onFileOpened: (callback) => {

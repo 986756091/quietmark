@@ -13,6 +13,7 @@ import {
   Files,
   FolderOpen,
   Focus,
+  Languages,
   Moon,
   PanelLeft,
   PenLine,
@@ -26,16 +27,18 @@ import {
 import "highlight.js/styles/github.css";
 import "./styles.css";
 import { buildExportHtml, documentTitle, extractOutline, renderMarkdown } from "./markdown.js";
-import { sampleMarkdown } from "./sample.js";
+import { getStoredLanguage, getTranslation, LANGUAGE_STORAGE_KEY } from "./i18n.js";
 
 const api = window.quietMark;
 
 function App() {
-  const [markdown, setMarkdown] = useState(sampleMarkdown);
+  const [language, setLanguage] = useState(getStoredLanguage);
+  const t = useMemo(() => getTranslation(language), [language]);
+  const [markdown, setMarkdown] = useState(() => t.file.sampleMarkdown);
   const [html, setHtml] = useState("");
   const [fileInfo, setFileInfo] = useState({
     path: null,
-    name: "Untitled.md",
+    name: t.file.untitledName,
     directory: ""
   });
   const [dirty, setDirty] = useState(false);
@@ -85,6 +88,12 @@ function App() {
   }, [theme]);
 
   useEffect(() => {
+    document.documentElement.lang = t.htmlLang;
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+    api?.setLanguage(language);
+  }, [language, t.htmlLang]);
+
+  useEffect(() => {
     api?.setEdited(dirty);
   }, [dirty]);
 
@@ -109,12 +118,12 @@ function App() {
       height: "100%",
       width: "100%",
       minHeight: 420,
-      lang: "en_US",
+      lang: t.vditorLang,
       cdn: "./vendor/vditor",
       theme: theme === "dark" ? "dark" : "classic",
       icon: "ant",
       typewriterMode: true,
-      placeholder: "Start writing...",
+      placeholder: t.editor.placeholder,
       cache: {
         enable: false
       },
@@ -173,7 +182,7 @@ function App() {
       }
       safeDestroy(editor);
     };
-  }, [mode, theme]);
+  }, [mode, theme, t.editor.placeholder, t.vditorLang]);
 
   useEffect(() => {
     if ((mode === "instant" || mode === "rich") && vditorRef.current && editorReadyRef.current) {
@@ -220,14 +229,14 @@ function App() {
   }, []);
 
   const newDocument = useCallback(() => {
-    replaceDocument("# Untitled\n\nStart writing.", {
+    replaceDocument(t.file.newDocumentContent, {
       path: null,
-      name: "Untitled.md",
+      name: t.file.untitledName,
       directory: "",
       folderFiles: []
     });
     setMode("instant");
-  }, [replaceDocument]);
+  }, [replaceDocument, t.file.newDocumentContent, t.file.untitledName]);
 
   const saveDocument = useCallback(
     async (forceSaveAs = false) => {
@@ -247,10 +256,10 @@ function App() {
         directory: result.directory,
         folderFiles: result.folderFiles || []
       });
-      showToast("Saved");
+      showToast(t.toasts.saved);
       return result;
     },
-    [fileInfo.path, readCurrentMarkdown, replaceDocument, showToast]
+    [fileInfo.path, readCurrentMarkdown, replaceDocument, showToast, t.toasts.saved]
   );
 
   const openDocument = useCallback(async () => {
@@ -265,7 +274,7 @@ function App() {
 
       if (dirty) {
         if (!fileInfo.path) {
-          showToast("Save the current draft before switching");
+          showToast(t.toasts.saveDraftBeforeSwitch);
           return;
         }
         const result = await saveDocument(false);
@@ -287,9 +296,9 @@ function App() {
       });
       setQuery("");
       setMode("instant");
-      showToast(`Opened ${payload.name}`);
+      showToast(t.toasts.opened(payload.name));
     },
-    [dirty, fileInfo.path, replaceDocument, saveDocument, showToast]
+    [dirty, fileInfo.path, replaceDocument, saveDocument, showToast, t.toasts]
   );
 
   const exportHtml = useCallback(async () => {
@@ -298,9 +307,9 @@ function App() {
     const payload = buildExportHtml({ body, title, theme: theme === "dark" ? "dark" : "light" });
     const result = await api?.exportHtml({ html: payload, title });
     if (result && !result.canceled) {
-      showToast("HTML exported");
+      showToast(t.toasts.htmlExported);
     }
-  }, [readCurrentMarkdown, showToast, theme, title]);
+  }, [readCurrentMarkdown, showToast, theme, title, t.toasts.htmlExported]);
 
   useEffect(() => {
     const removeFile = api?.onFileOpened((payload) => {
@@ -312,7 +321,7 @@ function App() {
       });
       setQuery("");
       setMode("instant");
-      showToast(`Opened ${payload.name}`);
+      showToast(t.toasts.opened(payload.name));
     });
 
     const removeMenu = api?.onMenuCommand((command) => {
@@ -335,7 +344,7 @@ function App() {
       removeFile?.();
       removeMenu?.();
     };
-  }, [exportHtml, newDocument, replaceDocument, saveDocument, showToast]);
+  }, [exportHtml, newDocument, replaceDocument, saveDocument, showToast, t.toasts]);
 
   const updateMarkdown = (value) => {
     markdownRef.current = value;
@@ -368,6 +377,9 @@ function App() {
   );
   const sidebarVisible = outlineOpen && !focusMode;
   const activeFolderName = fileInfo.directory ? fileInfo.directory.split(/[\\/]/).filter(Boolean).pop() : "";
+  const switchLanguage = useCallback(() => {
+    setLanguage((value) => (value === "zh" ? "en" : "zh"));
+  }, []);
 
   return (
     <div className={`app-shell ${sidebarVisible ? "has-sidebar" : ""} ${focusMode ? "is-focus" : ""}`}>
@@ -375,7 +387,7 @@ function App() {
         <div className="window-drag" />
         <div className="document-meta">
           <div className="document-title">
-            {dirty && <span className="dirty-dot" aria-label="Unsaved changes" />}
+            {dirty && <span className="dirty-dot" aria-label={t.status.unsavedChanges} />}
             <span>{fileInfo.name}</span>
           </div>
           <button
@@ -384,21 +396,21 @@ function App() {
             onClick={() => api?.showItem(fileInfo.path)}
             disabled={!fileInfo.path}
           >
-            {fileInfo.directory || "Local draft"}
+            {fileInfo.directory || t.file.localDraft}
           </button>
         </div>
 
         <div className="toolbar">
-          <IconButton title="New" onClick={newDocument}>
+          <IconButton title={t.actions.new} onClick={newDocument}>
             <FilePlus2 />
           </IconButton>
-          <IconButton title="Open" onClick={openDocument}>
+          <IconButton title={t.actions.open} onClick={openDocument}>
             <FolderOpen />
           </IconButton>
-          <IconButton title="Save" onClick={() => saveDocument(false)}>
+          <IconButton title={t.actions.save} onClick={() => saveDocument(false)}>
             <Save />
           </IconButton>
-          <IconButton title="Export HTML" onClick={exportHtml}>
+          <IconButton title={t.actions.exportHtml} onClick={exportHtml}>
             <Download />
           </IconButton>
         </div>
@@ -416,25 +428,25 @@ function App() {
                 <button
                   type="button"
                   className="side-title-button"
-                  title={filesPanelOpen ? "Collapse files" : "Expand files"}
+                  title={filesPanelOpen ? t.actions.collapseFiles : t.actions.expandFiles}
                   aria-expanded={filesPanelOpen}
                   onClick={() => setFilesPanelOpen((value) => !value)}
                 >
                   {filesPanelOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
-                  <span>Files</span>
+                  <span>{t.sidebar.files}</span>
                   <span className="side-count">{folderFiles.length}</span>
                 </button>
-                <button type="button" title="Close sidebar" onClick={() => setOutlineOpen(false)}>
+                <button type="button" title={t.actions.closeSidebar} onClick={() => setOutlineOpen(false)}>
                   <X size={16} />
                 </button>
               </div>
               {filesPanelOpen && (
                 <>
-                  <div className="folder-label" title={fileInfo.directory || "No folder"}>
-                    {activeFolderName || "No folder"}
+                  <div className="folder-label" title={fileInfo.directory || t.file.noFolder}>
+                    {activeFolderName || t.file.noFolder}
                   </div>
-                  <nav className="file-list scroll-list" aria-label="Markdown files">
-                    {folderFiles.length === 0 && <span className="empty-outline">Open a Markdown file</span>}
+                  <nav className="file-list scroll-list" aria-label={t.sidebar.markdownFiles}>
+                    {folderFiles.length === 0 && <span className="empty-outline">{t.file.openMarkdown}</span>}
                     {folderFiles.map((file) => (
                       <button
                         type="button"
@@ -457,16 +469,16 @@ function App() {
                 <button
                   type="button"
                   className="side-title-button"
-                  title={outlinePanelOpen ? "Collapse outline" : "Expand outline"}
+                  title={outlinePanelOpen ? t.actions.collapseOutline : t.actions.expandOutline}
                   aria-expanded={outlinePanelOpen}
                   onClick={() => setOutlinePanelOpen((value) => !value)}
                 >
                   {outlinePanelOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
-                  <span>Outline</span>
+                  <span>{t.sidebar.outline}</span>
                   <span className="side-count">{outline.length}</span>
                 </button>
                 {outlinePanelOpen && (
-                  <button type="button" title="Clear filter" onClick={() => setQuery("")} disabled={!query}>
+                  <button type="button" title={t.actions.clearFilter} onClick={() => setQuery("")} disabled={!query}>
                     <X size={16} />
                   </button>
                 )}
@@ -479,11 +491,11 @@ function App() {
                       className="search-input"
                       value={query}
                       onChange={(event) => setQuery(event.target.value)}
-                      placeholder="Filter headings"
+                      placeholder={t.sidebar.filterHeadings}
                     />
                   </label>
                   <nav className="outline-list scroll-list">
-                    {filteredOutline.length === 0 && <span className="empty-outline">No headings</span>}
+                    {filteredOutline.length === 0 && <span className="empty-outline">{t.sidebar.noHeadings}</span>}
                     {filteredOutline.map((item) => (
                       <button
                         type="button"
@@ -504,28 +516,28 @@ function App() {
 
         <section className="editor-shell">
           <div className="control-strip">
-            <div className="segmented" aria-label="Editor mode">
+            <div className="segmented" aria-label={t.editor.mode}>
               <Segment
                 active={mode === "instant"}
-                title="Instant"
+                title={t.modes.instant}
                 onClick={() => setMode("instant")}
                 icon={<PenLine />}
               />
               <Segment
                 active={mode === "rich"}
-                title="Rich"
+                title={t.modes.rich}
                 onClick={() => setMode("rich")}
                 icon={<Wand2 />}
               />
               <Segment
                 active={mode === "source"}
-                title="Source"
+                title={t.modes.source}
                 onClick={() => setMode("source")}
                 icon={<Code2 />}
               />
               <Segment
                 active={mode === "read"}
-                title="Read"
+                title={t.modes.read}
                 onClick={() => setMode("read")}
                 icon={<BookOpen />}
               />
@@ -533,21 +545,25 @@ function App() {
 
             <div className="strip-actions">
               {!outlineOpen && !focusMode && (
-                <IconButton title="Show outline" onClick={() => setOutlineOpen(true)}>
+                <IconButton title={t.actions.showSidebar} onClick={() => setOutlineOpen(true)}>
                   <PanelLeft />
                 </IconButton>
               )}
-              <IconButton title="Focus mode" pressed={focusMode} onClick={() => setFocusMode((value) => !value)}>
+              <IconButton title={t.actions.focusMode} pressed={focusMode} onClick={() => setFocusMode((value) => !value)}>
                 <Focus />
               </IconButton>
+              <button type="button" className="language-toggle" onClick={switchLanguage} title={t.language.switch}>
+                <Languages size={16} />
+                <span>{t.language.nextShort}</span>
+              </button>
               <button
                 type="button"
                 className="theme-toggle"
                 onClick={() => setTheme((value) => (value === "dark" ? "paper" : "dark"))}
-                title="Toggle theme"
+                title={t.actions.toggleTheme}
               >
                 {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-                <span>{theme === "dark" ? "Paper" : "Dark"}</span>
+                <span>{theme === "dark" ? t.theme.paper : t.theme.dark}</span>
               </button>
             </div>
           </div>
@@ -561,7 +577,7 @@ function App() {
                 value={markdown}
                 spellCheck="true"
                 onChange={(event) => updateMarkdown(event.target.value)}
-                aria-label="Markdown source editor"
+                aria-label={t.editor.sourceAria}
               />
             )}
             {mode === "read" && (
@@ -576,14 +592,14 @@ function App() {
 
       <footer className="statusbar">
         <div className="status-group">
-          <span>{stats.words} words</span>
-          <span>{stats.characters} chars</span>
-          <span>{stats.readingMinutes} min read</span>
+          <span>{t.status.words(stats.words)}</span>
+          <span>{t.status.characters(stats.characters)}</span>
+          <span>{t.status.readingMinutes(stats.readingMinutes)}</span>
         </div>
         <div className="status-group">
           <Type size={14} />
-          <span>{modeLabel(mode)}</span>
-          {dirty ? <span>Unsaved</span> : <span><Check size={13} /> Saved</span>}
+          <span>{modeLabel(mode, t)}</span>
+          {dirty ? <span>{t.status.unsaved}</span> : <span><Check size={13} /> {t.status.saved}</span>}
         </div>
       </footer>
 
@@ -651,11 +667,11 @@ function getStats(markdown) {
   };
 }
 
-function modeLabel(mode) {
-  if (mode === "read") return "Read";
-  if (mode === "source") return "Source";
-  if (mode === "rich") return "WYSIWYG";
-  return "Instant";
+function modeLabel(mode, t) {
+  if (mode === "read") return t.modes.read;
+  if (mode === "source") return t.modes.source;
+  if (mode === "rich") return t.modes.wysiwyg;
+  return t.modes.instant;
 }
 
 const rootElement = document.getElementById("root");

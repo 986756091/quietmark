@@ -492,7 +492,8 @@ button {
   color: var(--text);
 }
 
-.theme-toggle {
+.theme-toggle,
+.language-toggle {
   align-items: center;
   display: inline-flex;
   gap: 7px;
@@ -506,8 +507,14 @@ button {
   font-size: 12px;
 }
 
-.theme-toggle:hover {
+.theme-toggle:hover,
+.language-toggle:hover {
   color: var(--accent-strong);
+}
+
+.language-toggle {
+  min-width: 50px;
+  justify-content: center;
 }
 
 .writing-surface {
@@ -836,8 +843,14 @@ button {
   }
 
   .segmented button span,
-  .theme-toggle span {
+  .theme-toggle span,
+  .language-toggle span {
     display: none;
+  }
+
+  .language-toggle {
+    min-width: 31px;
+    padding: 0;
   }
 
   .markdown-editor,

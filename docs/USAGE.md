@@ -1,5 +1,7 @@
 # QuietMark Usage Guide
 
+[English](USAGE.md) | [简体中文](USAGE.zh-CN.md)
+
 ## Opening Files
 
 Use any of these options:
@@ -9,6 +11,10 @@ Use any of these options:
 - Drag a `.md`, `.markdown`, `.mdown`, or `.txt` file onto the macOS app icon.
 
 When a Markdown file is open, QuietMark scans the same folder and shows nearby Markdown files in the Files panel.
+
+## Language
+
+Use the language button in the top toolbar to switch between English and Simplified Chinese. The setting is saved locally and updates toolbar text, sidebar labels, status text, editor placeholder text, Vditor's built-in language, and the macOS menu.
 
 ## Switching Files
 

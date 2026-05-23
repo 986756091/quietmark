@@ -1,11 +1,14 @@
 # QuietMark
 
-QuietMark is a calm macOS Markdown editor built with Electron, React, Vite, and Vditor. It focuses on a quiet writing surface, live Markdown rendering, native file workflows, a folder-aware Markdown sidebar, and document outline navigation.
+[English](README.md) | [简体中文](README.zh-CN.md)
+
+QuietMark is a calm macOS Markdown editor built with Electron, React, Vite, and Vditor. It focuses on a quiet writing surface, live Markdown rendering, native file workflows, a folder-aware Markdown sidebar, document outline navigation, and a bilingual English/Chinese interface.
 
 It is not affiliated with Typora and does not copy Typora branding or proprietary UI. QuietMark aims for the same class of distraction-light Markdown writing experience while remaining its own open-source project.
 
 ## Features
 
+- English and Simplified Chinese UI switch, including the app menu
 - Live Markdown editing with instant rendered feedback
 - Rich, source, and read modes
 - Native macOS file open, save, save as, recent documents, and represented file title
@@ -56,6 +59,10 @@ Open a Markdown file with `File -> Open...`, drag a Markdown file onto the app i
 
 When a file is open, the left sidebar automatically lists Markdown files from the same folder. Click a file to switch to it. The Outline panel below it shows headings from the current document. Both Files and Outline can be collapsed and each list scrolls independently for large projects.
 
+Use the language button in the toolbar to switch between English and Simplified Chinese. The choice is saved locally and also updates the macOS menu labels.
+
+More details: [Usage Guide](docs/USAGE.md) | [中文使用指南](docs/USAGE.zh-CN.md)
+
 ## Scripts
 
 - `npm run dev`: run the development app
@@ -67,9 +74,10 @@ When a file is open, the left sidebar automatically lists Markdown files from th
 
 ```text
 main/       Electron main process and preload bridge
-src/        React UI, Markdown rendering, and styles
+src/        React UI, Markdown rendering, localization, and styles
 public/     Vendored Vditor runtime assets
 scripts/    Build helper scripts
+docs/       English and Chinese user documentation
 ```
 
 ## License
