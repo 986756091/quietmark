@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.npm-cache/
+.electron-cache/
+.DS_Store
+*.log
+*.local
+*.tmp
+QuietMark.app/
