@@ -9,6 +9,7 @@
     "dev": "concurrently -k \"vite\" \"npm:dev:electron\"",
     "dev:electron": "wait-on http://127.0.0.1:5173 && QUIETMARK_DEV=1 electron .",
     "build": "vite build && node scripts/copy-main.cjs",
+    "package:mac": "node scripts/package-mac.cjs",
     "preview": "vite preview",
     "start": "electron ."
   },

@@ -26,6 +26,12 @@ QuietMark 与 Typora 没有关联，也不复制 Typora 的品牌或专有界面
 - Node.js 22 或更高版本
 - npm
 
+## 下载使用
+
+普通用户可以直接从 [GitHub 最新 Release](https://github.com/986756091/quietmark/releases/latest) 下载 `QuietMark-mac-arm64.zip`，解压后双击 `QuietMark.app` 启动。
+
+目前打包版本面向 Apple Silicon Mac。开发者仍然可以按下面的命令从源码运行。
+
 ## 安装
 
 ```sh
@@ -53,6 +59,14 @@ npm run build
 npm start
 ```
 
+## 打包 macOS App
+
+```sh
+npm run package:mac
+```
+
+该命令会生成 `release/QuietMark.app` 和 `release/QuietMark-mac-arm64.zip`。
+
 ## 使用
 
 可以通过 `文件 -> 打开...`、工具栏打开按钮，或将 `.md` / `.markdown` / `.mdown` / `.txt` 文件拖到 macOS App 图标上打开文档。
@@ -67,6 +81,7 @@ npm start
 
 - `npm run dev`：运行开发版应用
 - `npm run build`：构建渲染进程，并复制 Electron 主进程文件到 `dist/main`
+- `npm run package:mac`：在 `release/` 中生成可双击启动的 macOS App 和 zip 压缩包
 - `npm start`：用 Electron 运行生产构建
 - `npm run preview`：在浏览器中预览 Vite 构建结果
 

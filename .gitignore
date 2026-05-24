@@ -7,3 +7,4 @@ dist/
 *.local
 *.tmp
 QuietMark.app/
+release/
