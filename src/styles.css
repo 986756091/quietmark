@@ -571,7 +571,7 @@ button {
   font-family: var(--serif);
   font-size: 18px;
   line-height: 1.74;
-  padding: 48px max(34px, calc((100% - 760px) / 2)) 112px !important;
+  padding: 36px max(30px, calc((100% - 1040px) / 2)) 64px !important;
 }
 
 .vditor-host .vditor-ir pre.vditor-reset,
@@ -859,5 +859,6 @@ button {
   .vditor-host .vditor-wysiwyg {
     padding-left: 22px;
     padding-right: 22px;
+    padding-bottom: 64px;
   }
 }
